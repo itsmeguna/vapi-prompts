@@ -3,7 +3,7 @@ pipeline {
 
     environment {
        environment {
-            VAPI_URL = 'https://api.vapi.ai/v1/prompts'  
+            VAPI_URL = 'https://api.vapi.ai/api/assistant''  
     }
 
     stages {
