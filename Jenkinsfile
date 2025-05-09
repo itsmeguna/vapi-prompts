@@ -2,8 +2,7 @@ pipeline {
     agent any
 
     environment {
-       environment {
-            VAPI_URL = 'https://api.vapi.ai/api/assistant'  
+        VAPI_URL = 'https://api.vapi.ai/api/assistant'  
     }
 
     stages {
@@ -19,12 +18,11 @@ pipeline {
                     script {
                         def prompts = readFile('vapi-prompts/ai-prompt.json').trim()
                         sh """
-                            curl -X POST \
-                                 -H "Content-Type: application/json" \
-                                 -H "Authorization: Bearer $VAPI_KEY" \
-                                -d '${prompts}' \
-                                $VAPI_URL
-
+                            curl -X POST \\
+                                 -H "Content-Type: application/json" \\
+                                 -H "Authorization: Bearer $VAPI_KEY" \\
+                                 -d '${prompts}' \\
+                                 $VAPI_URL
                         """
                     }
                 }
@@ -39,3 +37,5 @@ pipeline {
         failure {
             echo '❌ Deployment failed.'
         }
+    }
+}
