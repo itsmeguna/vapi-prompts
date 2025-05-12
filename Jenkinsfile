@@ -16,7 +16,7 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'VAPI_API_KEY', variable: 'VAPI_KEY')]) {
                     script {
-                        def prompts = readFile('ai-prompt.json').trim()
+                        def newPrompt  = readFile('ai-prompt.json').trim()
                         def payload = """
                         {
                           "model": {
