@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        VAPI_URL = 'https://api.vapi.ai/api/assistant'  
+        VAPI_URL = 'https://dashboard.vapi.ai/assistants/051fd725-6f8c-47a7-8e79-0d812c1b0536'
     }
 
     stages {
@@ -12,18 +12,21 @@ pipeline {
             }
         }
 
-        stage('Deploy Prompts') {
+        stage('Deploy Prompt to Assistant') {
             steps {
                 withCredentials([string(credentialsId: 'VAPI_API_KEY', variable: 'VAPI_KEY')]) {
                     script {
-                        def prompts = readFile('ai-prompt.json').trim()
-                        sh """
-                            curl -X POST \\
-                                 -H "Content-Type: application/json" \\
-                                 -H "Authorization: Bearer $VAPI_KEY" \\
-                                 -d '${prompts}' \\
+                        // Print which assistant is being updated
+                        echo "Updating Assistant at: ${env.VAPI_URL}"
+
+                        // Use curl to send PATCH request with JSON file
+                        sh '''
+                            curl -X PATCH \
+                                 -H "Content-Type: application/json" \
+                                 -H "Authorization: Bearer $VAPI_KEY" \
+                                 -d @vapi-prompts/ai-prompt.json \
                                  $VAPI_URL
-                        """
+                        '''
                     }
                 }
             }
@@ -32,10 +35,10 @@ pipeline {
 
     post {
         success {
-            echo '✅ Deployment successful!'
+            echo ' Prompt deployed to Vapi successfully!'
         }
         failure {
-            echo '❌ Deployment failed.'
+            echo ' Deployment failed. Check the logs for details.'
         }
     }
 }
