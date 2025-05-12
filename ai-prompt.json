@@ -1,1 +1,13 @@
-"Welcome to our service! How can I assist you today?"
+{
+  "model": {
+    "model": "gpt-4o",
+    "provider": "openai",
+    "temperature": 0.5,
+    "messages": [
+      {
+        "role": "system",
+        "content": "Hello...This is Liza ..i Hope u doing well?" 
+      }
+    ]
+  }
+}

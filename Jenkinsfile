@@ -2,54 +2,28 @@ pipeline {
     agent any
 
     environment {
-        VAPI_URL = 'https://api.vapi.ai/assistants/051fd725-6f8c-47a7-8e79-0d812c1b0536'
+        CONFIG_FILE = 'config.env'
+        PROMPT_FILE = 'ai-prompt.json'
     }
 
     stages {
-        stage('Checkout') {
+        stage('Load Config & Update Prompt') {
             steps {
-                git branch: 'main', url: 'https://github.com/itsmeguna/vapi-prompts.git'
-            }
-        }
+                script {
+                    // Load .env file into environment variables
+                    def config = readProperties file: CONFIG_FILE
+                    def promptPayload = readFile(PROMPT_FILE).replaceAll("'", "'\\\\''")
 
-        stage('Update System Prompt') {
-            steps {
-                withCredentials([string(credentialsId: 'VAPI_API_KEY', variable: 'VAPI_KEY')]) {
-                    script {
-                        def newPrompt  = readFile('ai-prompt.json').trim()
-                        def payload = """
-                        {
-                          "model": {
-                            "messages": [
-                              {
-                                "role": "system",
-                                "content": ${groovy.json.JsonOutput.toJson(newPrompt)}
-                              }
-                            ]
-                          }
-                        }
-                        """
-                        writeFile file: 'payload.json', text: payload
+                    def apiUrl = "https://api.vapi.ai/assistant/${config.ASSISTANT_ID}"
 
-                        sh '''
-                            curl -X PATCH \
-                                 -H "Authorization: Bearer $VAPI_KEY" \
-                                 -H "Content-Type: application/json" \
-                                 --data @payload.json \
-                                 $VAPI_URL
-                        '''
-                    }
+                    sh """
+                        curl --location --request PATCH '${apiUrl}' \\
+                        --header 'Authorization: Bearer ${config.VAPI_TOKEN}' \\
+                        --header 'Content-Type: application/json' \\
+                        --data '${promptPayload}'
+                    """
                 }
             }
-        }
-    }
-
-    post {
-        success {
-            echo ' Prompt update successful!'
-        }
-        failure {
-            echo ' Prompt update failed.'
         }
     }
 }
