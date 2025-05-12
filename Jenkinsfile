@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        VAPI_URL = 'https://dashboard.vapi.ai/assistants/051fd725-6f8c-47a7-8e79-0d812c1b0536'
+        VAPI_URL = 'https://api.vapi.ai/assistants/051fd725-6f8c-47a7-8e79-0d812c1b0536'
     }
 
     stages {
@@ -12,19 +12,30 @@ pipeline {
             }
         }
 
-        stage('Deploy Prompt to Assistant') {
+        stage('Update System Prompt') {
             steps {
                 withCredentials([string(credentialsId: 'VAPI_API_KEY', variable: 'VAPI_KEY')]) {
                     script {
-                        // Print which assistant is being updated
-                        echo "Updating Assistant at: ${env.VAPI_URL}"
+                        def newPrompt = readFile('vapi-prompts/ai-prompt.json').trim()
+                        def payload = """
+                        {
+                          "model": {
+                            "messages": [
+                              {
+                                "role": "system",
+                                "content": ${groovy.json.JsonOutput.toJson(newPrompt)}
+                              }
+                            ]
+                          }
+                        }
+                        """
+                        writeFile file: 'payload.json', text: payload
 
-                        // Use curl to send PATCH request with JSON file
                         sh '''
                             curl -X PATCH \
-                                 -H "Content-Type: application/json" \
                                  -H "Authorization: Bearer $VAPI_KEY" \
-                                 -d @vapi-prompts/ai-prompt.json \
+                                 -H "Content-Type: application/json" \
+                                 --data @payload.json \
                                  $VAPI_URL
                         '''
                     }
@@ -35,10 +46,10 @@ pipeline {
 
     post {
         success {
-            echo ' Prompt deployed to Vapi successfully!'
+            echo ' Prompt update successful!'
         }
         failure {
-            echo ' Deployment failed. Check the logs for details.'
+            echo ' Prompt update failed.'
         }
     }
 }
